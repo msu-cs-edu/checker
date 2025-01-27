@@ -69,7 +69,7 @@ docs = [
 version = {file = "VERSION"}
 
 [project.scripts]
-checker = "checker.__main__:cli"
+custom-checker = "checker.__main__:cli"
 
 [tool.setuptools.packages.find]
 exclude = ["tests*"]
