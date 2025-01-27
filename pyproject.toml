@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "manytask-checker"
+name = "custom-manytask-checker"
 authors = [
-    {name = "Konstantin Chernyshev", email = "kdchernyshev@gmail.com"},
+    {name = "Yegor Podlesov", email = "ypodlesov@gmail.com"},
 ]
 description = "Students' solution checker"
 readme = "README.md"
@@ -36,10 +36,6 @@ dependencies = [
     "GitPython >=3.0.0,<4.0.0",
 ]
 dynamic = ["version"]
-
-[project.urls]
-Source = "https://github.com/yandexdataschool/checker"
-Documentation = "https://manytask.github.io/checker/"
 
 [project.optional-dependencies]
 test = [
