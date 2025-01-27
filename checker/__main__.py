@@ -234,6 +234,22 @@ def check(
 @click.option("--branch", type=str, default=None, help="Rewrite branch name for the submission")
 @click.option("--no-clean", is_flag=True, help="Clean or not check tmp folders")
 @click.option(
+    "-t",
+    "--task",
+    type=str,
+    multiple=True,
+    default=None,
+    help="Task name to grade (multiple possible)",
+)
+@click.option(
+    "-g",
+    "--group",
+    type=str,
+    multiple=True,
+    default=None,
+    help="Group name to grade (multiple possible)",
+)
+@click.option(
     "-v/-s",
     "--verbose/--silent",
     is_flag=True,
@@ -251,6 +267,8 @@ def grade(
     username: str | None,
     branch: str | None,
     no_clean: bool,
+    task: list[str] | None,
+    group: list[str] | None,
     verbose: bool,
     dry_run: bool,
 ) -> None:
@@ -283,23 +301,43 @@ def grade(
     )
     exporter.export_for_testing(exporter.temporary_dir)
 
-    # detect changes to test
-    try:
-        changed_tasks = course.detect_changes(checker_config.testing.changes_detection)
-    except Exception as e:
-        print_info("DETECT CHANGES FAILED", color="red")
-        print_info(e)
-        exit(1)
+    tasks_to_check: list[FileSystemTask] = {}
+
+    if not task and not group:
+        # detect changes to test
+        try:
+            tasks_to_check = course.detect_changes(checker_config.testing.changes_detection)
+        except Exception as e:
+            print_info("DETECT CHANGES FAILED", color="red")
+            print_info(e)
+            exit(1)
+    else:
+        # validate tasks and groups
+        filesystem_tasks: dict[str, FileSystemTask] = dict()
+        if task:
+            for filesystem_task in course.get_tasks(enabled=True):
+                if filesystem_task.name in task:
+                    filesystem_tasks[filesystem_task.name] = filesystem_task
+        if group:
+            for filesystem_group in course.get_groups(enabled=True):
+                if filesystem_group.name in group:
+                    for filesystem_task in filesystem_group.tasks:
+                        filesystem_tasks[filesystem_task.name] = filesystem_task
+        if filesystem_tasks:
+            print_info(f"Checking tasks: {', '.join(filesystem_tasks.keys())}")
+
+        tasks_to_check=list(filesystem_tasks.values()) if filesystem_tasks else None,
 
     # create tester to... to test =)
     tester = Tester(course, checker_config, verbose=verbose, dry_run=dry_run)
+
 
     # run tests
     # TODO: progressbar on parallelize
     try:
         tester.run(
             exporter.temporary_dir,
-            changed_tasks,
+            tasks_to_check,
             report=True,
         )
     except TestingError as e:
